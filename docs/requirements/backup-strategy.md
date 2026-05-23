@@ -4,4 +4,4 @@
 **Project**: hulyio-cli
 **Philosophy**: CIAO / CIAO-Lite
 
-... (full content from original)
+[Full content from previous pomo version, adapted]
