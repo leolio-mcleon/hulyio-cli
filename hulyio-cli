@@ -1,0 +1,75 @@
+#!/bin/sh
+# =============================================================================
+# hulyio-cli – version 0.1.0
+# =============================================================================
+#
+# Lightweight CLI Installation Helper
+# STRICT CIAO-Lite DEFENSIVE CODING STYLE
+# !!! DO NOT MODIFY OR SIMPLIFY ANY PART OF THIS HEADER !!!
+# =============================================================================
+
+APP_NAME="hulyio-cli"
+VERSION="0.1.0"
+SCRIPT_URL="https://raw.githubusercontent.com/leolio-mcleon/hulyio-cli/main/hulyio-cli"
+
+: "${QUIET:=0}"
+: "${JSON:=0}"
+: "${FORCE:=0}"
+
+if [ "$(id -u)" -eq 0 ]; then
+    IS_ROOT=1
+    INSTALL_PATH="/usr/local/bin/${APP_NAME}"
+else
+    IS_ROOT=0
+    INSTALL_PATH="${HOME}/.local/bin/${APP_NAME}"
+fi
+
+# Output System
+out_text() {
+    local level="$1" msg="$2"
+    [ "${JSON}" -eq 1 ] && return 0
+    [ "${QUIET}" -eq 1 ] && [ "${level}" != "out_error" ] && return 0
+    case "${level}" in
+        out_error)   printf >&2 "[ERROR] %s\n" "${msg}" ;;
+        out_warn)    printf >&2 "[WARN] %s\n" "${msg}" ;;
+        out_info)    printf "[INFO] %s\n" "${msg}" ;;
+        out_success) printf "[OK] %s\n" "${msg}" ;;
+        plain)       printf "%s\n" "${msg}" ;;
+    esac
+}
+out_info() { out_text out_info "$*"; }
+out_success() { out_text out_success "$*"; }
+out_warn() { out_text out_warn "$*"; }
+out_error() { out_text out_error "$*"; }
+out_die() { out_error "$*"; exit 1; }
+
+inst_is_installed() {
+    [ -x "${INSTALL_PATH}" ] && return 0 || return 1
+}
+
+inst_perform_install() {
+    out_info "Installing ${APP_NAME} ${VERSION}..."
+    if [ "$IS_ROOT" -eq 1 ]; then
+        mkdir -p /usr/local/bin
+    else
+        mkdir -p "${HOME}/.local/bin"
+    fi
+
+    local tmp
+    tmp=$(mktemp) || out_die "Cannot create temp file"
+    curl -fsSL "${SCRIPT_URL}" -o "${tmp}" || out_die "Download failed"
+    chmod +x "${tmp}"
+    mv "${tmp}" "${INSTALL_PATH}" || out_die "Install failed"
+
+    out_success "${APP_NAME} ${VERSION} installed successfully!"
+}
+
+main() {
+    if ! inst_is_installed && [ $# -eq 0 ]; then
+        inst_perform_install
+        exit 0
+    fi
+    out_info "${APP_NAME} is ready."
+}
+
+main "$@"
